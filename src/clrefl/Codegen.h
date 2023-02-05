@@ -589,7 +589,7 @@ namespace clgen
 	void write_line(string& t, int& i, const string& s, bool spaces = false, bool noendl = false)
 	{
 		if(s[0] == '}') --i;
-		if(t.back() == '\n')
+		if(!t.empty() && t.back() == '\n')
 			for(size_t c = 0; c < i; ++c) t += spaces ? "    " : "\t";
 		t += s;
 		if(!noendl) t += "\n";

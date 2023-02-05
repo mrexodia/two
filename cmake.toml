@@ -1,0 +1,27 @@
+# Reference: https://build-cpp.github.io/cmkr/cmake-toml
+[project]
+name = "two"
+include-after = ["libclang.cmake"]
+
+[target.json11]
+type = "static"
+sources = ["3rdparty/json11/json11.cpp"]
+include-directories = ["3rdparty/json11"]
+
+[target.stl]
+type = "static"
+sources = ["src/stl/*.cpp", "src/stl/*.hpp", "src/stl/*.h"]
+include-directories = ["src"]
+compile-features = ["cxx_std_20"]
+compile-definitions = ["USE_STL", "TWO_STATIC"]
+
+[target.infra]
+type = "static"
+sources = ["src/infra/*.cpp", "src/infra/*.hpp", "src/infra/*.h"]
+link-libraries = ["stl"]
+
+[target.clrefl]
+type = "executable"
+sources = ["src/clrefl/*.cpp", "src/clrefl/*.h"]
+link-libraries = ["stl", "libclang", "json11", "infra"]
+

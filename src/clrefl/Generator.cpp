@@ -14,6 +14,12 @@
 
 #define DEBUG_CLANG_ARGS 0
 
+static bool has_hack(const stl::vector<stl::string>& a, const std::string& s)
+{
+	static stl::vector<stl::string> hack{ "refl", "struct", "base", "func", "constr", "attr", "meth" };
+	return stl::has(hack, s);
+}
+
 namespace two
 {
 	using Json = json11::Json;
@@ -112,15 +118,19 @@ namespace two
 
 	bool should_visit(CXCursor cursor, CLModule& module)
 	{
-		auto fix_path = [](const string& path) { return replace(path, "\\", "/"); };
 		string location = fix_path(file(cursor));
+		puts(location.c_str());
+		if (location == R"(d:/CodeBlocks/two/build/binja/Api.h)")
+			__debugbreak();
 		return module.m_parsed_files.find(location) == module.m_parsed_files.end();
 	}
 
 	bool should_reflect(CXCursor cursor, CLModule& module)
 	{
-		auto fix_path = [](const string& path) { return replace(path, "\\", "/"); };
 		string location = fix_path(file(cursor));
+		puts(location.c_str());
+		if (location == R"(d:/CodeBlocks/two/build/binja/Api.h)")
+			__debugbreak();
 		return location.find(module.m_path) == 0 && location.find("meta") == string::npos;
 	}
 
@@ -159,7 +169,7 @@ namespace two
 
 		e.m_cursor = cursor;
 		e.m_annotations = get_annotations(e.m_cursor);
-		e.m_reflect = has(e.m_annotations, "refl") && should_reflect(cursor, module);
+		e.m_reflect = has_hack(e.m_annotations, "refl") && should_reflect(cursor, module);
 
 		module.m_has_reflected |= e.m_reflect;
 	}
@@ -253,13 +263,13 @@ namespace two
 
 		c.m_annotations = get_annotations(cursor);
 
-		c.m_struct = has(c.m_annotations, "struct") || cursor.kind == CXCursor_StructDecl;
-		c.m_move_only = has(c.m_annotations, "nocopy");
-		c.m_reflect = has(c.m_annotations, "refl") && should_reflect(cursor, module);
-		c.m_array = has(c.m_annotations, "array");
-		c.m_span = has(c.m_annotations, "span");
-		c.m_sequence = has(c.m_annotations, "seque") || c.m_span;
-		c.m_extern = has(c.m_annotations, "extern");
+		c.m_struct = has_hack(c.m_annotations, "struct") || cursor.kind == CXCursor_StructDecl;
+		c.m_move_only = has_hack(c.m_annotations, "nocopy");
+		c.m_reflect = has_hack(c.m_annotations, "refl") && should_reflect(cursor, module);
+		c.m_array = has_hack(c.m_annotations, "array");
+		c.m_span = has_hack(c.m_annotations, "span");
+		c.m_sequence = has_hack(c.m_annotations, "seque") || c.m_span;
+		c.m_extern = has_hack(c.m_annotations, "extern");
 
 		c.m_is_template = cursor.kind == CXCursor_ClassTemplate;
 		c.m_is_templated = c.m_name.find("<") != string::npos && !c.m_is_template;
@@ -448,10 +458,10 @@ namespace two
 		m.m_type = qual_type(module, c, member_type, !c.m_is_template);
 
 		m.m_annotations = get_annotations(cursor);
-		m.m_nonmutable = has(m.m_annotations, "nomut");
-		m.m_structure = has(m.m_annotations, "graph");
-		m.m_link = has(m.m_annotations, "link");
-		m.m_component = has(m.m_annotations, "comp");
+		m.m_nonmutable = has_hack(m.m_annotations, "nomut");
+		m.m_structure = has_hack(m.m_annotations, "graph");
+		m.m_link = has_hack(m.m_annotations, "link");
+		m.m_component = has_hack(m.m_annotations, "comp");
 
 		if(!c.m_is_template)
 		{
@@ -496,7 +506,7 @@ namespace two
 				CLType* base = module.find_type(name);
 				if(base && base->m_type_kind == CLTypeKind::Alias)
 					base = static_cast<CLAlias*>(base)->m_target;
-				if(base && (base->m_reflect || has(base->m_annotations, "refl")))
+				if(base && (base->m_reflect || has_hack(base->m_annotations, "refl")))
 				{
 					CLClass* basecls = static_cast<CLClass*>(base);
 					c.m_bases.push_back(basecls);
@@ -506,15 +516,15 @@ namespace two
 			}
 		}
 
-		else if(cursor.kind == CXCursor_Constructor && has(annotations, "constr"))
+		else if(cursor.kind == CXCursor_Constructor && has_hack(annotations, "constr"))
 			parse_constructor(module, c, cursor);
-		else if(cursor.kind == CXCursor_CXXMethod && has(annotations, "attr"))
+		else if(cursor.kind == CXCursor_CXXMethod && has_hack(annotations, "attr"))
 			parse_member(module, c, cursor);
-		else if(cursor.kind == CXCursor_CXXMethod && has(annotations, "meth"))
+		else if(cursor.kind == CXCursor_CXXMethod && has_hack(annotations, "meth"))
 			parse_method(module, c, cursor);
-		else if(cursor.kind == CXCursor_FieldDecl && has(annotations, "attr"))
+		else if(cursor.kind == CXCursor_FieldDecl && has_hack(annotations, "attr"))
 			parse_member(module, c, cursor);
-		else if(cursor.kind == CXCursor_VarDecl && has(annotations, "attr"))
+		else if(cursor.kind == CXCursor_VarDecl && has_hack(annotations, "attr"))
 			parse_static(module, c, cursor);
 		else if(cursor.kind == CXCursor_UnionDecl || cursor.kind == CXCursor_StructDecl)
 		{
@@ -583,7 +593,7 @@ namespace two
 				CLNamespace& ns = module.get_namespace(spelling(c), parent);
 				build_classes(c, module, ns);
 			}
-			else if(c.kind == CXCursor_VarDecl && has(annotations, "base"))
+			else if(c.kind == CXCursor_VarDecl && has_hack(annotations, "base"))
 			{
 				module.base_type(type(c));
 			}
@@ -601,13 +611,13 @@ namespace two
 					module.register_type(t);
 				}
 			}
-			else if(is_definition(c) && has(annotations, "refl"))
+			else if(is_definition(c) && has_hack(annotations, "refl"))
 			{
 				if(c.kind == CXCursor_EnumDecl)
 					decl_enum(module, parent, c);
 				else if((c.kind == CXCursor_ClassDecl || c.kind == CXCursor_StructDecl))
 				{
-					CLClass& cl = has(annotations, "seque") || has(annotations, "span")
+					CLClass& cl = has_hack(annotations, "seque") || has_hack(annotations, "span")
 						? decl_sequence_type(module, parent, c)
 						: decl_class_type(module, parent, c);
 					build_classes(c, module, cl);
@@ -618,11 +628,11 @@ namespace two
 					build_classes(c, module, cl);
 				}
 			}
-			else if(c.kind == CXCursor_FunctionTemplate && has(annotations, "func"))
+			else if(c.kind == CXCursor_FunctionTemplate && has_hack(annotations, "func"))
 				decl_function_template(module, parent, c);
-			else if(c.kind == CXCursor_FunctionDecl && has(annotations, "func") && should_reflect(c, module))
+			else if(c.kind == CXCursor_FunctionDecl && has_hack(annotations, "func") && should_reflect(c, module))
 				decl_function(module, parent, c);
-			else if(c.kind == CXCursor_FunctionDecl && has(annotations, "meth") && should_reflect(c, module))
+			else if(c.kind == CXCursor_FunctionDecl && has_hack(annotations, "meth") && should_reflect(c, module))
 				decl_function_method(module, parent, c);
 		});
 	}
@@ -864,7 +874,7 @@ using namespace two;
 
 int main(int argc, char *argv[])
 {
-	string all = "d:/dev/two/build/refl/two_infra_refl.json d:/dev/two/build/refl/two_type_refl.json d:/dev/two/build/refl/two_tree_refl.json d:/dev/two/build/refl/two_jobs_refl.json d:/dev/two/build/refl/two_pool_refl.json d:/dev/two/build/refl/two_refl_refl.json d:/dev/two/build/refl/two_ecs_refl.json d:/dev/two/build/refl/two_srlz_refl.json d:/dev/two/build/refl/two_math_refl.json d:/dev/two/build/refl/two_geom_refl.json d:/dev/two/build/refl/two_noise_refl.json d:/dev/two/build/refl/two_wfc_refl.json d:/dev/two/build/refl/two_fract_refl.json d:/dev/two/build/refl/two_lang_refl.json d:/dev/two/build/refl/two_ctx_refl.json d:/dev/two/build/refl/two_ui_refl.json d:/dev/two/build/refl/two_uio_refl.json d:/dev/two/build/refl/two_snd_refl.json d:/dev/two/build/refl/two_bgfx_refl.json d:/dev/two/build/refl/two_gfx_refl.json d:/dev/two/build/refl/two_gltf_refl.json d:/dev/two/build/refl/two_gfx_pbr_refl.json d:/dev/two/build/refl/two_gfx_obj_refl.json d:/dev/two/build/refl/two_gfx_gltf_refl.json d:/dev/two/build/refl/two_gfx_ui_refl.json d:/dev/two/build/refl/two_gfx_edit_refl.json d:/dev/two/build/refl/two_tool_refl.json d:/dev/two/build/refl/two_wfc_gfx_refl.json d:/dev/two/build/refl/two_frame_refl.json";
+	string all = R"(d:\CodeBlocks\two\build\binja\reflect.json)";
 	
 	CLGenerator generator;
 

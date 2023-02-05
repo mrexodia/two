@@ -594,13 +594,18 @@ namespace two
 		}
 	};
 
+	static string fix_path(const string& path)
+	{
+		return replace(path, "\\", "/");
+	}
+
 	class CLModule
 	{
 	public:
 		CLModule() : m_global("") {}
 		CLModule(const string& nemespace, const string& name, const string& dotname, const string& id, 
 				 const string& rootdir, const string& subdir, const string& path, vector<string> includedirs, vector<CLModule*> dependencies)
-			: m_namespace(nemespace), m_name(name), m_dotname(dotname), m_id(id), m_rootdir(rootdir), m_subdir(subdir), m_path(path)
+			: m_namespace(nemespace), m_name(name), m_dotname(dotname), m_id(id), m_rootdir(fix_path(rootdir)), m_subdir(fix_path(subdir)), m_path(fix_path(path))
 			, m_includedirs(includedirs), m_dependencies(dependencies)
 			, m_global("")
 		{

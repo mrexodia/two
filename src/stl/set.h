@@ -4,6 +4,7 @@
 #ifdef USE_STL
 #ifndef TWO_STD_MODULES
 #include <set>
+#include <unordered_set>
 #endif
 namespace stl
 {

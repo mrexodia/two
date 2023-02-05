@@ -4,6 +4,7 @@
 #ifdef USE_STL
 #ifndef TWO_STD_MODULES
 #include <map>
+#include <unordered_map>
 #endif
 namespace stl
 {

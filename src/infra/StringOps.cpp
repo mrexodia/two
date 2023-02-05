@@ -57,7 +57,8 @@ namespace two
 		while (cur_pos != string::npos)
 		{
 			cur_pos = str.find(separator, last_pos);
-			result.push_back(str.substr(last_pos, cur_pos - last_pos));
+			auto sub = str.substr(last_pos, cur_pos - last_pos);
+			result.push_back(sub);
 			last_pos = cur_pos + separator.size();
 		}
 
